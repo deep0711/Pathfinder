@@ -3,9 +3,10 @@
 //1.Program starts from setup() function.Go there first.Line nm:72
 //Refer Wikipedia A* algo page for learning about algorithm
 
-var rows = 50;
-var cols = 50;
+var rows = 25;
+var cols = 52;
 var grid = new Array(cols);
+var check = false;
 
 //Stores cells which need to be visited
 var openset = [];
@@ -29,7 +30,7 @@ function Spot(i, j) {
     this.camefrom = null;
     this.wall = false;
 
-    if (random(1) < 0.4) {
+    if (random(1) < 0.2) {
         this.wall = true;
     }
 
@@ -37,9 +38,10 @@ function Spot(i, j) {
     this.showyou = function(col) {
         fill(col);
         if (this.wall == true)
-            fill(0);
-        noStroke();
-        rect(this.i * w, this.j * h, w - 1, h - 1);
+            fill(124, 125, 125);
+        strokeWeight(1);
+        stroke(124, 125, 125);
+        rect(this.i * w, this.j * h, w, h);
     }
 
     //for adding neighbours of current cell
@@ -60,7 +62,7 @@ function Spot(i, j) {
             this.neighbours.push(grid[i][j - 1]);
         }
         //add diagonals also
-
+        /*
         if (i < cols - 1 && j < rows - 1 && grid[i + 1][j + 1].wall == false) {
             this.neighbours.push(grid[i + 1][j + 1]);
         }
@@ -73,36 +75,41 @@ function Spot(i, j) {
         if (j > 0 && i < cols - 1 && grid[i + 1][j - 1].wall == false) {
             this.neighbours.push(grid[i + 1][j - 1]);
         }
+        */
 
     }
 }
 
 //This function removes specified cell from openset,as it has been visited
+
 function removefromarray(arr, ele) {
+
     for (var i = arr.length - 1; i >= 0; i--) {
         if (arr[i] == ele) {
             arr.splice(i, 1);
+            return;
         }
     }
 }
 
 //making educated guess of euclidean distance
+
 function heuristic(a, b) {
     //euclidean
     var eud = Math.sqrt((a.i - b.i) * (a.i - b.i) + (a.j - b.j) * (a.j - b.j));
     //manhattan
     var man = abs(a.i - b.i) + abs(a.j - b.j);
-    return eud;
+    return man;
 }
 
 //Main function.starts from here!
 function setup() {
 
-    createCanvas(800, 800);
+    createCanvas(1360, 650);
     console.log("Pathfinder");
 
     h = height / rows;
-    w = height / cols;
+    w = width / cols;
 
 
     //making a 2D array.An 1D array of grid created before.See at line 8
@@ -133,7 +140,6 @@ function setup() {
             grid[i][j].addneighbours(grid); //Refer to line 37
         }
     }
-
     openset.push(start);
 }
 
@@ -143,97 +149,126 @@ function draw() {
     //A* starts from here
     //there are some cells remainging to be visited
     if (openset.length > 0) {
-        var winner = 0;
+
         //calcuting the cell which needs to be visited with the minimum 'f' value
+        var winner = 0;
+
         for (var i = 0; i < openset.length; i++) {
             if (openset[i].f < openset[winner].f) {
                 winner = i;
             }
         }
-        var current = openset[winner];
 
+        var current = openset[winner];
         //if that unvisited cell is our destination
         if (current === end) {
+            check = true;
             console.log("DONE!");
-            noLoop(); //for stopping the calling of draw() function again.
-        }
+            //for stopping the calling of draw() function again.
+            path = [];
+            var temp = current;
+            path.push(current);
 
-        //remove that current cell from openset as it has been visited
-        removefromarray(openset, current);
-        //and aad it to the closed set
-        closedset.push(current);
+            while (temp.camefrom) {
+                path.push(temp.camefrom);
+                temp = temp.camefrom;
+            }
 
-        //taking all the neighbors of current cell
-        var neigh = current.neighbours;
+            noFill();
+            stroke(255, 245, 102);
+            strokeWeight(w / 8);
+            beginShape();
+            for (var i = 0; i < path.length; i++) {
+                vertex(path[i].i * w + w / 2, path[i].j * h + h / 2);
+            }
+            endShape();
 
-        for (var i = 0; i < neigh.length; i++) {
-            var neighbor = neigh[i];
-            //if that neighbour is not in closed set,then we only need to visit
-            if (!closedset.includes(neighbor)) {
-                var tempG = current.g + 1;
+            noLoop();
+        } else {
+            //remove that current cell from openset as it has been visited
+            removefromarray(openset, current);
 
-                // Updating minimum distance of any node if it has been visited before in the same loop
-                if (openset.includes(neighbor)) {
-                    if (tempG < neighbor.g) {
+            //and aad it to the closed set
+            closedset.push(current);
+
+            //taking all the neighbors of current cell
+            var neigh = current.neighbours;
+
+            for (var i = 0; i < neigh.length; i++) {
+                var neighbor = neigh[i];
+                //if that neighbour is not in closed set,then we only need to visit
+                if (!closedset.includes(neighbor)) {
+                    var tempG = current.g + 1;
+
+                    // Updating minimum distance of any node if it has been visited before in the same loop
+                    if (openset.includes(neighbor)) {
+                        if (tempG < neighbor.g) {
+                            neighbor.g = tempG;
+                            neighbor.h = heuristic(neighbor, end);
+                            neighbor.f = neighbor.g + neighbor.h;
+                            neighbor.camefrom = current;
+                        }
+                    } else {
                         neighbor.g = tempG;
+                        openset.push(neighbor);
+                        neighbor.h = heuristic(neighbor, end);
+                        neighbor.f = neighbor.g + neighbor.h;
+                        neighbor.camefrom = current;
+
                     }
-                } else {
-                    neighbor.g = tempG;
-                    openset.push(neighbor);
-                    neighbor.h = heuristic(neighbor, end);
-                    neighbor.f = neighbor.g + neighbor.h;
-                    neighbor.camefrom = current;
                 }
-
             }
+            //A* ends here   
         }
-        //A* ends here   
 
-        background(0);
-
-        for (var i = 0; i < cols; i++) {
-            for (var j = 0; j < rows; j++) {
-                //white color for all grids
-                grid[i][j].showyou(color(255));
+        if (!check) {
+            background(0);
+            for (var i = 0; i < cols; i++) {
+                for (var j = 0; j < rows; j++) {
+                    grid[i][j].showyou(color(255));
+                }
             }
+
+
+            for (var i = 0; i < openset.length; i++) {
+                //if in neighbour of current node,colour them green
+                openset[i].showyou(color(177, 250, 82));
+            }
+
+            for (var i = 0; i < closedset.length; i++) {
+                //if already visited colour them red
+                closedset[i].showyou(color(74, 247, 244));
+            }
+
+            //If want to show path on runtime :)
+            /*
+            path = [];
+            var temp = current;
+            path.push(current);
+            while (temp.camefrom) {
+                path.push(temp.camefrom);
+                temp = temp.camefrom;
+            }
+
+            for (var i = 0; i < path.length; i++) {
+                path[i].showyou(color(255, 231, 6));
+            }
+
+            //Drawing the line in the path
+
+            noFill();
+            stroke(255, 0, 255);
+            strokeWeight(w / 4);
+            beginShape();
+            for (var i = 0; i < path.length; i++) {
+                vertex(path[i].i * w + w / 2, path[i].j * h + h / 2);
+            }
+            endShape();
+
+            */
+            start.showyou(color(0, 255, 0));
+            end.showyou(color(255, 0, 0));
         }
-
-
-        for (var i = 0; i < openset.length; i++) {
-            //if visited colour them green
-            openset[i].showyou(color(0, 255, 0));
-        }
-
-        for (var i = 0; i < closedset.length; i++) {
-            //if remaining to be visited colour them red
-            closedset[i].showyou(color(255, 0, 0));
-
-        }
-
-        path = [];
-        var temp = current;
-        path.push(current);
-        while (temp.camefrom) {
-            path.push(temp.camefrom);
-            temp = temp.camefrom;
-        }
-
-        for (var i = 0; i < path.length; i++) {
-            path[i].showyou(color(255, 231, 6));
-        }
-        //Drawing the line in the path
-        noFill();
-        stroke(255, 0, 255);
-        strokeWeight(w / 4);
-        beginShape();
-        for (var i = 0; i < path.length; i++) {
-            vertex(path[i].i * w + w / 2, path[i].j * h + h / 2);
-        }
-        endShape();
-
-        start.showyou(color(255, 255, 0));
-        end.showyou(color(255, 0, 255));
-
     } else {
 
         console.log("No path Exist!");
@@ -245,8 +280,9 @@ function draw() {
                 grid[i][j].showyou(color(255));
             }
         }
-        start.showyou(color(255, 255, 0));
-        end.showyou(color(255, 0, 255));
+        start.showyou(color(0, 255, 0));
+        end.showyou(color(255, 0, 0));
     }
-    //end of the code!!
 }
+
+//end of the code!!
