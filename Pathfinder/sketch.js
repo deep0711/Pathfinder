@@ -2,7 +2,6 @@
 //Follow this step:
 //1.Program starts from setup() function.Go there first.Line nm:72
 //Refer Wikipedia A* algo page for learning about algorithm
-
 var rows = 21;
 var cols = 45;
 var grid = new Array(cols);
@@ -15,24 +14,26 @@ var h, w;
 var path = [];
 
 //Property function of each Cell
-function Spot(i, j) {
-    this.i = i;
-    this.j = j;
-    this.f = Infinity;
-    this.h = Infinity;
-    this.g = Infinity;
-    this.visited = false;
-    this.neighbours = [];
-    this.camefrom = null;
-    this.wall = false;
+class Spot {
 
-    //random wall creation
-    if (random(1) < 0.4) {
-        this.wall = true;
-    }
+    constructor(i, j) {
+            this.i = i;
+            this.j = j;
+            this.f = Infinity;
+            this.h = Infinity;
+            this.g = Infinity;
+            this.visited = false;
+            this.neighbours = [];
+            this.camefrom = null;
+            this.wall = false;
 
-    //for displaying each cell
-    this.showyou = function(col) {
+            //random wall creation
+            if (random(1) < 0.2) {
+                this.wall = true;
+            }
+        }
+        //for displaying each cell
+    showyou = function(col) {
         fill(col);
         if (this.wall == true)
             fill(124, 125, 125);
@@ -42,7 +43,7 @@ function Spot(i, j) {
     }
 
     //for adding neighbours of current cell
-    this.addneighbours = function(grid) {
+    addneighbours = function(grid) {
         var i = this.i;
         var j = this.j;
 
@@ -73,6 +74,7 @@ function Spot(i, j) {
             this.neighbours.push(grid[i + 1][j - 1]);
         }
         */
+
     }
 }
 
@@ -138,15 +140,15 @@ function setup() {
     //Assigning property to each cell of 2D grid i.e. its f,g,h value 
     for (var i = 0; i < cols; i++) {
         for (var j = 0; j < rows; j++) {
-            grid[i][j] = new Spot(i, j); //refer to line 20.Spot function is just like a constructor function initialising property of each cell to zero.
+            grid[i][j] = new Spot(i, j); //refer to line 20.Spot is just a constructor initialising property of each cell to zero.
         }
     }
 
     //start from top left corner
-    start = grid[5][10];
+    start = grid[2][10];
     //end at bottom right corner
-    end = grid[35][10];
-    //end = grid[29][5];
+    //end = grid[cols - 1][rows - 1];
+    end = grid[29][5];
 
     start.wall = false;
     end.wall = false;
@@ -173,7 +175,6 @@ function setup() {
 
 //this function repeats itself again and again
 function draw() {
-
     //A* starts from here
     //there are some cells remainging to be visited
     if (!pqueue.isEmpty()) {
@@ -193,16 +194,20 @@ function draw() {
                 path.push(temp.camefrom);
                 temp = temp.camefrom;
             }
-
+            swal({
+                title: "Congratulations!!",
+                text: "Found the path with length=" + path.length,
+                icon: "success",
+                button: "yes!",
+            });
             noFill();
             stroke(255, 245, 102);
-            strokeWeight(w / 7);
+            strokeWeight(w / 5);
             beginShape();
             for (var i = 0; i < path.length; i++) {
                 vertex(path[i].i * w + w / 2, path[i].j * h + h / 2);
             }
             endShape();
-
             //for stopping the calling of draw() function again.
             noLoop();
         } else {
@@ -254,7 +259,12 @@ function draw() {
             end.showyou(color(255, 0, 0));
         }
     } else {
-
+        swal({
+            title: "Sorry",
+            text: "No Path Found!",
+            icon: "error",
+            button: "no!",
+        });
         console.log("No path Exist!");
         start.showyou(color(0, 255, 0));
         end.showyou(color(255, 0, 0));
