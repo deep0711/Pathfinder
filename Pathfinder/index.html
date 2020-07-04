@@ -5,53 +5,37 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pathfinder</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <link rel="stylesheet" href="style.css" />
-  <script src="../p5.js"></script>
-  
-  <!--The above js file is for including PS5 js framework! -->
-  <!--<script src="../addons/p5.sound.min.js"></script>-->
-  <script src="sketch.js"></script>
-
+   <script src="sweet.min.js"></script>
+    <script src="../p5.js"></script>
+    
+    <!--The above js file is for including PS5 js framework! -->
+    <!--<script src="../addons/p5.sound.min.js"></script>-->
+    
 </head>
 
 <body>
+    
     <div id="algorithm_panel" class="panel right_panel">
     <header><h2 class="header_title">Algorithm</h2></header>
     
-    <div class="input-field col s12">
-    <select name="algorithm" id="algorithm_panel">
+    <div class="form-group">
+    <select class="form-control" id="sel1">
       <option value="Astar">A*</option>
       <option value="BFS">Breadth First Search </option>
       <option value="DFS">Depth First Search</option>
       <option value="Djisktra">Djikstra</option>
     </select>
     </div>
-    <br>
-    
-    <header><h2 class="header_title">Maze Generation Algorithm</h2></header>
-    <div class="custom-select">
-    <select name="maze-algorithm" id="maze-algorithm">
-      <option value="Random">Random</option>
-      <option value="Recursive">Recursive </option>
-      <option value="Recursive_Vertical">Recursive_Vertical</option>
-      <option value="Recursive_Horizontal">Recursive_Horizontal</option>
-    </select>
-    </div>
-    <br>
-    <header><h2 class="header_title">Animation Speed</h2></header>
-    <div class="custom-select">    
-    <select name="speed" id="speed">
-      <option value="fast">Fast</option>
-      <option value="medium">Medium</option>
-      <option value="slow">Slow</option>
-    </select>
-    </div>
-    </div>
     <div id="play_panel" class="panel right_panel">
       <button id="button1" class="control_button">Start Search</button>
       <button id="button2" class="control_button">Pause Search</button>
       <button id="button3" class="control_button">Clear Walls</button>
     </div>
+     <script src="sketch.js"></script>
 </body>
 
-</html>       
+</html>
