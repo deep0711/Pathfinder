@@ -4,18 +4,16 @@
 //Refer Wikipedia A* algo page for learning about algorithm
 var rows = 21;
 var cols = 45;
-var grid = new Array(cols);
-var check = false;
+var grid;
+var check;
 var pqueue;
-var closedset = [];
 var start;
 var end;
 var h, w;
-var path = [];
+var first_time = 0;
 
 //Property function of each Cell
 class Spot {
-
     constructor(i, j) {
             this.i = i;
             this.j = j;
@@ -28,22 +26,25 @@ class Spot {
             this.wall = false;
 
             //random wall creation
-            if (random(1) < 0.2) {
+            if (random(1) < 0) {
                 this.wall = true;
             }
         }
         //for displaying each cell
-    showyou = function(col) {
+
+    showyou(col) {
         fill(col);
         if (this.wall == true)
             fill(124, 125, 125);
         strokeWeight(1);
         stroke(124, 125, 125);
         rect(this.i * w, this.j * h, w, h);
+
     }
 
+
     //for adding neighbours of current cell
-    addneighbours = function(grid) {
+    addneighbours(grid) {
         var i = this.i;
         var j = this.j;
 
@@ -94,7 +95,7 @@ class priority_queue {
         this.items = [];
     }
 
-    enqueue = function(i, j) {
+    enqueue(i, j) {
 
         var ele = new queue_element(i, j);
         var contain = false;
@@ -111,59 +112,165 @@ class priority_queue {
         }
     }
 
-    dequeue = function() {
+    dequeue() {
 
         this.items.splice(0, 1);
     }
 
-    front = function() {
+    front() {
         return this.items[0];
     }
 
-    isEmpty = function() {
+    isEmpty() {
         return this.items.length == 0;
     }
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+$("#strt").click(function() {
+    Algorithm();
+});
+
+$(document).on("mousedown", function(event) {
+
+    //Finding Cell Coordinates!
+
+    if (first_time == 1) {
+        for (var i = 0; i < cols; i++) {
+            for (var j = 0; j < rows; j++) {
+                if (!grid[i][j].wall)
+                    grid[i][j].showyou(color(255));
+            }
+        }
+        start.showyou(color(0, 255, 0));
+        end.showyou(color(255, 0, 0));
+        first_time = 0;
+    }
+    if (first_time == 2)
+        first_time = 1;
+
+    //X- coordinate
+    var xc = Math.floor(mouseX / w);
+
+    //Y- coordinate
+    var yc = Math.floor(mouseY / h);
+
+    /**
+     * Check if the cell is currently a wall!
+     */
+    if (grid[xc][yc].wall == false) {
+
+        //Check if the current cell is not Souce and Destination
+        if (grid[xc][yc] != start && grid[xc][yc] != end) {
+
+            //If only pressed then also make the Cell a obstacle
+            grid[xc][yc].wall = true;
+
+            //Color the Cell
+            grid[xc][yc].showyou(color(255));
+
+            /**
+             * If the mouse is pressed and moved
+             * make every cell a obstacles excluding Sources and Destination
+             */
+            $(document).on("mousemove", function(ev) {
+
+                var xc = Math.floor(mouseX / w);
+                var yc = Math.floor(mouseY / h);
+
+                if (grid[xc][yc] != strt && grid[xc][yc] != end) {
+
+                    grid[xc][yc].wall = true;
+                    grid[xc][yc].showyou(color(255));
+                }
+            });
+
+            $(document).on("mouseup", function(e) {
+                //Stop the mousemove and mouseup
+                //Ready for Another MouseClick and MouseMove
+                $(this).unbind("mouseup mousemove");
+            });
+
+        }
+    } else {
+        //If the Cell is a Obstacle then it can't be Souce or Destination
+        grid[xc][yc].wall = false;
+        grid[xc][yc].showyou(color(255));
+        $(document).on("mousemove", function(event) {
+
+            //Current Cordinates of cell on which the mouse is!
+            var xc = Math.floor(mouseX / w);
+            var yc = Math.floor(mouseY / h);
+
+            grid[xc][yc].wall = false;
+            grid[xc][yc].showyou(color(255));
+
+        });
+        $(document).on("mouseup", function(event) {
+            $(this).unbind("mouseup mousemove");
+        });
+    }
+
+});
+
+$("#clr").click(function() {
+    setup();
+});
 //Main function.starts from here!
+
 function setup() {
 
     createCanvas(1360, 650);
-    console.log("Pathfinder");
     h = height / rows;
     w = width / cols;
+    grid = new Array(cols);
 
     //making a 2D array.An 1D array of grid created before.See at line 8
     for (var i = 0; i < cols; i++)
         grid[i] = new Array(rows);
 
-    //Assigning property to each cell of 2D grid i.e. its f,g,h value 
     for (var i = 0; i < cols; i++) {
         for (var j = 0; j < rows; j++) {
             grid[i][j] = new Spot(i, j); //refer to line 20.Spot is just a constructor initialising property of each cell to zero.
         }
     }
-
+    //Assigning property to each cell of 2D grid i.e. its f,g,h value 
     //start from top left corner
     start = grid[2][10];
     //end at bottom right corner
     //end = grid[cols - 1][rows - 1];
     end = grid[29][5];
 
-    start.wall = false;
-    end.wall = false;
-
-    //Storing neighbours of each cell in one of its property.Not considering diagonals
     for (var i = 0; i < cols; i++) {
         for (var j = 0; j < rows; j++) {
-            grid[i][j].addneighbours(grid); //Refer to line 37
+            grid[i][j].showyou(color(255));
+        }
+    }
+    start.showyou(color(0, 255, 0));
+    end.showyou(color(255, 0, 0));
+}
+
+
+async function Algorithm() {
+    first_time = 2;
+    pqueue = new priority_queue();
+    check = false;
+
+    for (var i = 0; i < cols; i++) {
+        for (var j = 0; j < rows; j++) {
+            grid[i][j].g = Infinity;
+            grid[i][j].f = Infinity;
+            grid[i][j].h = Infinity;
+            grid[i][j].visited = false;
+            grid[i][j].neighbours = [];
         }
     }
 
-    //Creating a priority_queue instance
-    pqueue = new priority_queue();
     start.g = 0;
-    start.f = 0;
+    start.f = Math.abs(start.i - end.i) + Math.abs(start.j - end.j); //dist(start.i, start.j, end.i, end.j); 
     pqueue.enqueue(start.i, start.j);
 
     for (var i = 0; i < cols; i++) {
@@ -171,14 +278,24 @@ function setup() {
             grid[i][j].showyou(color(255));
         }
     }
-}
 
-//this function repeats itself again and again
-function draw() {
+
+
+    var e = document.getElementById("select_algo");
+    var algo = e.options[e.selectedIndex].text;
+    console.log(algo);
+
+    var closedset = [];
     //A* starts from here
     //there are some cells remainging to be visited
-    if (!pqueue.isEmpty()) {
+    for (var i = 0; i < cols; i++) {
+        for (var j = 0; j < rows; j++) {
+            grid[i][j].addneighbours(grid); //Refer to line 37
+        }
+    }
 
+    while (!pqueue.isEmpty()) {
+        console.log("running!");
         var current = pqueue.front().element;
 
         //if that unvisited cell is our destination
@@ -186,7 +303,7 @@ function draw() {
             check = true;
             console.log("DONE!");
 
-            path = [];
+            var path = [];
             var temp = current;
             path.push(current);
 
@@ -209,7 +326,7 @@ function draw() {
             }
             endShape();
             //for stopping the calling of draw() function again.
-            noLoop();
+            break;
         } else {
             //remove that current cell from openset as it has been visited
             pqueue.dequeue();
@@ -230,7 +347,7 @@ function draw() {
                         neighbor.camefrom = current;
 
                     }
-                    var temph = Math.abs(neighbor.i - end.i) + Math.abs(neighbor.j - end.j); //Math.sqrt((neighbor.i - end.i) * (neighbor.i - end.i) + (neighbor.j - end.j) * (neighbor.j - end.j)); //Math.abs(neighbor.i - end.i) + Math.abs(neighbor.j - end.j);
+                    var temph = Math.abs(neighbor.i - end.i) + Math.abs(neighbor.j - end.j); //dist(neighbor.i, neighbor.j, end.i, end.j); Math.abs(neighbor.i - end.i) + Math.abs(neighbor.j - end.j); //Math.sqrt((neighbor.i - end.i) * (neighbor.i - end.i) + (neighbor.j - end.j) * (neighbor.j - end.j)); //Math.abs(neighbor.i - end.i) + Math.abs(neighbor.j - end.j);
                     var newcost = neighbor.g + temph;
 
                     if (newcost < neighbor.f) {
@@ -244,7 +361,6 @@ function draw() {
         }
 
         if (!check) {
-
             for (var i = 0; i < pqueue.items.length; i++) {
                 //if in neighbour of current node,colour them green
                 pqueue.items[i].element.showyou(color(177, 250, 82));
@@ -254,11 +370,12 @@ function draw() {
                 //if already visited colour them blue
                 closedset[i].showyou(color(74, 247, 244));
             }
-
             start.showyou(color(0, 255, 0));
             end.showyou(color(255, 0, 0));
+            await sleep(25);
         }
-    } else {
+    }
+    if (!check && pqueue.isEmpty()) {
         swal({
             title: "Sorry",
             text: "No Path Found!",
@@ -269,7 +386,6 @@ function draw() {
         start.showyou(color(0, 255, 0));
         end.showyou(color(255, 0, 0));
         //for stopping the calling of draw() function again.
-        noLoop();
     }
 }
 //end of the code!!
